@@ -1,0 +1,21 @@
+# Node
+node_modules/
+
+# Build
+/build/
+/out/
+/bin/
+
+# Gradle
+.gradle/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

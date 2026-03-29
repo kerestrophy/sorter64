@@ -1,0 +1,41 @@
+{
+  "startedAt": "2026-02-27T21:31:42.182Z",
+  "input": "O:\\ply5\\Neu",
+  "out": "O:\\Firma Schach Dojo\\sorter64\\output",
+  "options": {
+    "input": "O:\\ply5\\Neu",
+    "out": "O:\\Firma Schach Dojo\\sorter64\\output",
+    "gamesPerChunk": 200,
+    "prefix": "Neu",
+    "progressEvery": 1000,
+    "eloBins": null,
+    "timeControls": null,
+    "rated": "any",
+    "minMoves": null,
+    "maxMoves": null,
+    "since": null,
+    "until": null,
+    "dedupe": false,
+    "dryRun": false,
+    "zeroPad": 4,
+    "inputRecursive": false
+  },
+  "counters": {
+    "read": 840,
+    "written": 140,
+    "skipped": 700,
+    "skippedByReason": {
+      "no_moves": 700
+    },
+    "filteredByReason": {
+      "no_moves": 700
+    },
+    "bins": {
+      "chunks": 140
+    },
+    "chunks": {
+      "O:\\Firma Schach Dojo\\sorter64\\output\\chunks\\Neu_0001.pgn": 1
+    }
+  },
+  "finishedAt": "2026-02-27T21:31:42.239Z"
+}

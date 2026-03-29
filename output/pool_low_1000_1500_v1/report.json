@@ -1,0 +1,82 @@
+{
+  "startedAt": "2026-02-03T17:08:02.760Z",
+  "input": "O:\\Firma Schach Dojo\\PGNs Trainingsmaterial\\Online Profile\\Lichess\\Lichess 1000 bis 1500",
+  "out": "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1",
+  "options": {
+    "input": "O:\\Firma Schach Dojo\\PGNs Trainingsmaterial\\Online Profile\\Lichess\\Lichess 1000 bis 1500",
+    "out": "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1",
+    "gamesPerChunk": 2000,
+    "prefix": "Lichess 1000 bis 1500",
+    "progressEvery": 1000,
+    "eloBins": null,
+    "timeControls": null,
+    "rated": "any",
+    "minMoves": null,
+    "maxMoves": null,
+    "since": null,
+    "until": null,
+    "dedupe": false,
+    "dryRun": false,
+    "zeroPad": 4,
+    "inputRecursive": false
+  },
+  "counters": {
+    "read": 498912,
+    "written": 83152,
+    "skipped": 415760,
+    "skippedByReason": {
+      "no_moves": 415760
+    },
+    "filteredByReason": {
+      "no_moves": 415760
+    },
+    "bins": {
+      "chunks": 83152
+    },
+    "chunks": {
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0001.pgn": 1,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0002.pgn": 2,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0003.pgn": 3,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0004.pgn": 4,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0005.pgn": 5,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0006.pgn": 6,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0007.pgn": 7,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0008.pgn": 8,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0009.pgn": 9,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0010.pgn": 10,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0011.pgn": 11,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0012.pgn": 12,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0013.pgn": 13,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0014.pgn": 14,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0015.pgn": 15,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0016.pgn": 16,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0017.pgn": 17,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0018.pgn": 18,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0019.pgn": 19,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0020.pgn": 20,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0021.pgn": 21,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0022.pgn": 22,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0023.pgn": 23,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0024.pgn": 24,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0025.pgn": 25,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0026.pgn": 26,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0027.pgn": 27,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0028.pgn": 28,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0029.pgn": 29,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0030.pgn": 30,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0031.pgn": 31,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0032.pgn": 32,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0033.pgn": 33,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0034.pgn": 34,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0035.pgn": 35,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0036.pgn": 36,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0037.pgn": 37,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0038.pgn": 38,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0039.pgn": 39,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0040.pgn": 40,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0041.pgn": 41,
+      "O:\\Firma Schach Dojo\\sorter64\\output\\pool_low_1000_1500_v1\\chunks\\Lichess 1000 bis 1500_0042.pgn": 42
+    }
+  },
+  "finishedAt": "2026-02-03T17:08:05.461Z"
+}

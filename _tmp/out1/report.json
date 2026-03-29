@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-02-03T16:58:34.169Z",
+  "input": "O:\\Firma Schach Dojo\\sorter64\\_tmp\\pgns",
+  "out": "O:\\Firma Schach Dojo\\sorter64\\_tmp\\out1",
+  "options": {
+    "input": "O:\\Firma Schach Dojo\\sorter64\\_tmp\\pgns",
+    "out": "O:\\Firma Schach Dojo\\sorter64\\_tmp\\out1",
+    "gamesPerChunk": 5,
+    "prefix": "pgns",
+    "progressEvery": 1000,
+    "eloBins": null,
+    "timeControls": null,
+    "rated": "any",
+    "minMoves": null,
+    "maxMoves": null,
+    "since": null,
+    "until": null,
+    "dedupe": false,
+    "dryRun": false,
+    "zeroPad": 4,
+    "inputRecursive": false
+  },
+  "counters": {
+    "read": 5,
+    "written": 2,
+    "skipped": 3,
+    "skippedByReason": {
+      "bad_headers": 1,
+      "no_moves": 2
+    },
+    "filteredByReason": {
+      "bad_headers": 1,
+      "no_moves": 2
+    },
+    "bins": {
+      "chunks": 2
+    },
+    "chunks": {
+      "O:\\Firma Schach Dojo\\sorter64\\_tmp\\out1\\chunks\\pgns_0001.pgn": 1
+    }
+  },
+  "finishedAt": "2026-02-03T16:58:34.179Z"
+}

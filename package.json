@@ -1,0 +1,14 @@
+{
+  "name": "sorter64",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PGN Chunker + Sorter + Filter (streaming)",
+  "type": "commonjs",
+  "bin": {
+    "sorter64": "bin/sorter64.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
