@@ -19,7 +19,7 @@ function Show-Info([string]$message) {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'sorter64 Launcher - select an input PGN or folder'
-$form.Size = New-Object System.Drawing.Size(640, 320)
+$form.Size = New-Object System.Drawing.Size(640, 390)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
@@ -78,14 +78,28 @@ $txtExtra = New-Object System.Windows.Forms.TextBox
 $txtExtra.Location = New-Object System.Drawing.Point(140, 138)
 $txtExtra.Size = New-Object System.Drawing.Size(480, 20)
 
+$lblFirstWhiteMove = New-Object System.Windows.Forms.Label
+$lblFirstWhiteMove.Text = 'First white move (e.g. d4, e4, Nf3)'
+$lblFirstWhiteMove.Location = New-Object System.Drawing.Point(12, 174)
+$lblFirstWhiteMove.Size = New-Object System.Drawing.Size(180, 20)
+
+$txtFirstWhiteMove = New-Object System.Windows.Forms.TextBox
+$txtFirstWhiteMove.Location = New-Object System.Drawing.Point(200, 172)
+$txtFirstWhiteMove.Size = New-Object System.Drawing.Size(420, 20)
+
+$chkDrawOnly = New-Object System.Windows.Forms.CheckBox
+$chkDrawOnly.Text = 'Draw only'
+$chkDrawOnly.Location = New-Object System.Drawing.Point(140, 206)
+$chkDrawOnly.Size = New-Object System.Drawing.Size(120, 20)
+
 $btnStart = New-Object System.Windows.Forms.Button
 $btnStart.Text = 'Start'
-$btnStart.Location = New-Object System.Drawing.Point(430, 220)
+$btnStart.Location = New-Object System.Drawing.Point(430, 254)
 $btnStart.Size = New-Object System.Drawing.Size(90, 28)
 
 $btnCancel = New-Object System.Windows.Forms.Button
 $btnCancel.Text = 'Cancel'
-$btnCancel.Location = New-Object System.Drawing.Point(530, 220)
+$btnCancel.Location = New-Object System.Drawing.Point(530, 254)
 $btnCancel.Size = New-Object System.Drawing.Size(90, 28)
 $btnCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 
@@ -144,6 +158,7 @@ $btnStart.Add_Click({
   $inputPath = $txtInput.Text.Trim()
   $outputPath = $txtOutput.Text.Trim()
   $chunkText = $txtChunk.Text.Trim()
+  $firstWhiteMove = $txtFirstWhiteMove.Text.Trim()
   $extra = $txtExtra.Text.Trim()
 
   if (-not $inputPath) {
@@ -177,7 +192,8 @@ $btnStart.Add_Click({
   }
 
   $extraSummary = if ($extra) { $extra } else { '(none)' }
-  $summary = "Input: $inputPath`nOutput: $outputPath`nGames per chunk: $chunkValue`nExtra: $extraSummary"
+  $firstWhiteMoveSummary = if ($firstWhiteMove) { $firstWhiteMove } else { '(none)' }
+  $summary = "Input: $inputPath`nOutput: $outputPath`nGames per chunk: $chunkValue`nFirst white move: $firstWhiteMoveSummary`nExtra: $extraSummary"
   $confirm = [System.Windows.Forms.MessageBox]::Show($summary, 'Start sorter64?', [System.Windows.Forms.MessageBoxButtons]::OKCancel, [System.Windows.Forms.MessageBoxIcon]::Question)
   if ($confirm -ne [System.Windows.Forms.DialogResult]::OK) {
     return
@@ -189,6 +205,12 @@ $btnStart.Add_Click({
     $outputArg = "--out `"$outputPath`""
     $chunkArg = "--games-per-chunk $chunkValue"
     $argString = "$inputArg $outputArg $chunkArg"
+    if ($firstWhiteMove) {
+      $argString = "$argString --first-white-move `"$firstWhiteMove`""
+    }
+    if ($chkDrawOnly.Checked) {
+      $argString = "$argString --draw-only"
+    }
     if ($extra) {
       $argString = "$argString $extra"
     }
@@ -214,6 +236,8 @@ $form.Controls.AddRange(@(
   $lblOutput, $txtOutput, $btnOutput,
   $lblChunk, $txtChunk,
   $lblExtra, $txtExtra,
+  $lblFirstWhiteMove, $txtFirstWhiteMove,
+  $chkDrawOnly,
   $btnStart, $btnCancel
 ))
 

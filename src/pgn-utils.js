@@ -17,34 +17,47 @@ function formatGameText(headerLines, moveLines) {
   return `${headerBlock}\n\n${moveBlock}\n\n`;
 }
 
-function stripCommentsAndVariations(text) {
+function stripCommentsAndVariations(text, options = null) {
+  const stripVariations = !options || options.stripVariations !== false;
   let out = '';
   let braceDepth = 0;
   let parenDepth = 0;
   let i = 0;
   while (i < text.length) {
     const ch = text[i];
+
+    if (braceDepth > 0) {
+      if (ch === '{') {
+        braceDepth += 1;
+      } else if (ch === '}') {
+        braceDepth = Math.max(0, braceDepth - 1);
+      }
+      i += 1;
+      continue;
+    }
+
+    if (stripVariations && parenDepth > 0) {
+      if (ch === '(') {
+        parenDepth += 1;
+      } else if (ch === ')') {
+        parenDepth = Math.max(0, parenDepth - 1);
+      }
+      i += 1;
+      continue;
+    }
+
     if (ch === '{') {
       braceDepth += 1;
       i += 1;
       continue;
     }
-    if (ch === '}') {
-      braceDepth = Math.max(0, braceDepth - 1);
-      i += 1;
-      continue;
-    }
-    if (ch === '(') {
+    if (stripVariations && ch === '(') {
       parenDepth += 1;
       i += 1;
       continue;
     }
-    if (ch === ')') {
+    if (stripVariations && ch === ')') {
       parenDepth = Math.max(0, parenDepth - 1);
-      i += 1;
-      continue;
-    }
-    if (braceDepth > 0 || parenDepth > 0) {
       i += 1;
       continue;
     }
@@ -58,6 +71,119 @@ function stripCommentsAndVariations(text) {
     i += 1;
   }
   return out;
+}
+
+function normalizeWantedFirstMove(wantedFirstMove) {
+  if (typeof wantedFirstMove !== 'string') return null;
+  const normalized = wantedFirstMove.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeAllowedFirstMoves(allowedFirstMoves) {
+  if (!allowedFirstMoves) return [];
+  const normalized = [];
+  for (const move of allowedFirstMoves) {
+    if (typeof move !== 'string') continue;
+    const clean = move.trim();
+    if (clean.length > 0) {
+      normalized.push(clean);
+    }
+  }
+  return normalized;
+}
+
+function stripTrailingBangQuestion(token) {
+  let end = token.length;
+  while (end > 0) {
+    const ch = token[end - 1];
+    if (ch === '!' || ch === '?') {
+      end -= 1;
+      continue;
+    }
+    break;
+  }
+  return end === token.length ? token : token.slice(0, end);
+}
+
+function startsWithAny(moveToken, allowedFirstMoves) {
+  for (const wanted of allowedFirstMoves) {
+    if (moveToken.startsWith(wanted)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function hasWantedFirstWhiteMoveFromAllowed(movetext, allowedFirstMoves, options = null) {
+  if (typeof movetext !== 'string' || movetext.length === 0) {
+    return false;
+  }
+
+  const normalizedAllowed = normalizeAllowedFirstMoves(allowedFirstMoves);
+  if (normalizedAllowed.length === 0) {
+    return false;
+  }
+
+  // Default for large Lichess-like pools: mainline-only filtering.
+  // This intentionally strips PGN variations (...) for throughput and robustness.
+  // Can be disabled later via { mainlineOnly: false } for study/commented datasets.
+  const mainlineOnly = !options || options.mainlineOnly !== false;
+  const cleaned = stripCommentsAndVariations(movetext, { stripVariations: mainlineOnly });
+  const n = cleaned.length;
+  let i = 0;
+  let expectWhiteMoveAfterOneDot = false;
+
+  while (i < n) {
+    while (i < n && /\s/.test(cleaned[i])) {
+      i += 1;
+    }
+    if (i >= n) {
+      break;
+    }
+
+    let j = i;
+    while (j < n && !/\s/.test(cleaned[j])) {
+      j += 1;
+    }
+
+    let token = cleaned.slice(i, j);
+    i = j;
+
+    if (token[0] === '$') {
+      continue;
+    }
+
+    token = stripTrailingBangQuestion(token);
+    if (!token) {
+      continue;
+    }
+
+    if (expectWhiteMoveAfterOneDot) {
+      return startsWithAny(token, normalizedAllowed);
+    }
+
+    if (token.startsWith('1.')) {
+      const tail = token.slice(2);
+      if (tail.length === 0) {
+        expectWhiteMoveAfterOneDot = true;
+        continue;
+      }
+      if (tail[0] === '.') {
+        continue;
+      }
+      return startsWithAny(tail, normalizedAllowed);
+    }
+  }
+
+  return false;
+}
+
+function hasWantedFirstWhiteMove(movetext, wantedFirstMove, options = null) {
+  const normalizedWanted = normalizeWantedFirstMove(wantedFirstMove);
+  if (!normalizedWanted) {
+    return false;
+  }
+  return hasWantedFirstWhiteMoveFromAllowed(movetext, [normalizedWanted], options);
 }
 
 function tokenizeSAN(text) {
@@ -117,6 +243,8 @@ module.exports = {
   parseHeaderLine,
   formatGameText,
   stripCommentsAndVariations,
+  hasWantedFirstWhiteMove,
+  hasWantedFirstWhiteMoveFromAllowed,
   tokenizeSAN,
   estimatePlies,
   getResultToken,

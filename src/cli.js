@@ -10,7 +10,9 @@ const {
   normalizeDate,
   parseGameDate,
   classifyRated,
-  summarizeGame
+  summarizeGame,
+  hasWantedFirstWhiteMove,
+  hasWantedFirstWhiteMoveFromAllowed
 } = require('./pgn-utils');
 const { PgnWriter } = require('./writer');
 const { writeReport } = require('./report');
@@ -43,6 +45,7 @@ function parseArgs(argv) {
       case '--dedupe':
       case '--dry-run':
       case '--input-recursive':
+      case '--draw-only':
         opts.flags[key.slice(2)] = true;
         break;
       case '--input':
@@ -58,6 +61,8 @@ function parseArgs(argv) {
       case '--since':
       case '--until':
       case '--zero-pad':
+      case '--first-white-move':
+      case '--first-white-moves':
         if (value === null) {
           value = args[i + 1];
           i += 1;
@@ -75,7 +80,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`sorter64 - PGN Chunker + Sorter + Filter\n\nUsage:\n  node .\\bin\\sorter64.js --input <file-or-folder> [options]\n\nOptions:\n  --input <path>            Required PGN file or directory\n  --input-recursive         Include subfolders when input is a directory\n  --out <dir>               Output directory (default: out)\n  --games-per-chunk <n>     Games per chunk (default: 5000)\n  --prefix <name>           Filename prefix (default: input basename)\n  --progress-every <n>      Progress log interval (default: 1000)\n  --elo-bins <list>         e.g. "800-1200,1200-1600,1600-2000,2000-9999"\n  --time-controls <list>    bullet,blitz,rapid,classical,unknown\n  --rated <mode>            only|exclude|any (default: any)\n  --min-moves <n>           Minimum plies\n  --max-moves <n>           Maximum plies\n  --since <YYYY-MM-DD>      Inclusive date filter\n  --until <YYYY-MM-DD>      Inclusive date filter\n  --dedupe                  Skip duplicate games\n  --dry-run                 Count/report only, no chunk output\n  --zero-pad <n>            Chunk index padding (default: 4)\n  --help                    Show help\n\nExamples:\n  node .\\bin\\sorter64.js --input lichess.pgn --games-per-chunk 5000\n  node .\\bin\\sorter64.js --input lichess.pgn --elo-bins "800-1200,1200-1600" --time-controls blitz,rapid\n  node .\\bin\\sorter64.js --input lichess.pgn --dedupe --rated only --since 2021-01-01 --until 2021-12-31\n  node .\\bin\\sorter64.js --input .\\pgns --input-recursive --games-per-chunk 200\n`);
+  console.log(`sorter64 - PGN Chunker + Sorter + Filter\n\nUsage:\n  node .\\bin\\sorter64.js --input <file-or-folder> [options]\n\nOptions:\n  --input <path>            Required PGN file or directory\n  --input-recursive         Include subfolders when input is a directory\n  --out <dir>               Output directory (default: out)\n  --games-per-chunk <n>     Games per chunk (default: 5000)\n  --prefix <name>           Filename prefix (default: input basename)\n  --progress-every <n>      Progress log interval (default: 1000)\n  --elo-bins <list>         e.g. "800-1200,1200-1600,1600-2000,2000-9999"\n  --time-controls <list>    bullet,blitz,rapid,classical,unknown\n  --rated <mode>            only|exclude|any (default: any)\n  --min-moves <n>           Minimum plies\n  --max-moves <n>           Maximum plies\n  --since <YYYY-MM-DD>      Inclusive date filter\n  --until <YYYY-MM-DD>      Inclusive date filter\n  --first-white-move <san>  Keep games where first white move starts with value\n  --first-white-moves <csv> Keep games where first white move starts with any csv value\n  --dedupe                  Skip duplicate games\n  --dry-run                 Count/report only, no chunk output\n  --zero-pad <n>            Chunk index padding (default: 4)\n  --draw-only               Keep only drawn games (Result 1/2-1/2)\n  --help                    Show help\n\nExamples:\n  node .\\bin\\sorter64.js --input lichess.pgn --games-per-chunk 5000\n  node .\\bin\\sorter64.js --input lichess.pgn --elo-bins "800-1200,1200-1600" --time-controls blitz,rapid\n  node .\\bin\\sorter64.js --input lichess.pgn --dedupe --rated only --since 2021-01-01 --until 2021-12-31\n  node .\\bin\\sorter64.js --input .\\pgns --input-recursive --games-per-chunk 200\n  node .\\bin\\sorter64.js --input lichess.pgn --first-white-move d4\n`);
 }
 
 function coerceInt(value, name) {
@@ -100,10 +105,13 @@ function buildOptions(parsed) {
     maxMoves: parsed['max-moves'] ? coerceInt(parsed['max-moves'], 'max-moves') : null,
     since: parsed.since || null,
     until: parsed.until || null,
+    firstWhiteMove: parsed['first-white-move'] || null,
+    firstWhiteMoves: parsed['first-white-moves'] || null,
     dedupe: Boolean(parsed.flags && parsed.flags.dedupe),
     dryRun: Boolean(parsed.flags && parsed.flags['dry-run']),
     zeroPad: parsed['zero-pad'] ? coerceInt(parsed['zero-pad'], 'zero-pad') : DEFAULTS.zeroPad,
-    inputRecursive: Boolean(parsed.flags && parsed.flags['input-recursive'])
+    inputRecursive: Boolean(parsed.flags && parsed.flags['input-recursive']),
+    drawOnly: Boolean(parsed.flags && parsed.flags['draw-only'])
   };
 
   if (!opts.input) {
@@ -123,6 +131,16 @@ function buildOptions(parsed) {
   }
   if (opts.timeControls) {
     opts.timeControls = opts.timeControls.split(',').map((v) => v.trim()).filter(Boolean);
+  }
+  if (opts.firstWhiteMoves) {
+    opts.firstWhiteMoves = opts.firstWhiteMoves.split(',').map((v) => v.trim()).filter(Boolean);
+  }
+  if (opts.firstWhiteMove && opts.firstWhiteMove.trim()) {
+    const normalizedSingle = opts.firstWhiteMove.trim();
+    opts.firstWhiteMoves = (opts.firstWhiteMoves || []).concat([normalizedSingle]);
+  }
+  if (!opts.firstWhiteMoves || opts.firstWhiteMoves.length === 0) {
+    opts.firstWhiteMoves = null;
   }
   if (opts.eloBins) {
     opts.eloBins = parseEloBins(opts.eloBins);
@@ -244,6 +262,19 @@ async function runCli(argv) {
     }
     if (!game.moveText || game.moveText.trim().length === 0) {
       return { keep: false, reason: 'no_moves' };
+    }
+
+    if (opts.drawOnly && headers.Result !== '1/2-1/2') {
+      return { keep: false, reason: 'draw_only' };
+    }
+
+    if (opts.firstWhiteMoves) {
+      const keepByMove = opts.firstWhiteMoves.length === 1
+        ? hasWantedFirstWhiteMove(game.moveText, opts.firstWhiteMoves[0], { mainlineOnly: true })
+        : hasWantedFirstWhiteMoveFromAllowed(game.moveText, opts.firstWhiteMoves, { mainlineOnly: true });
+      if (!keepByMove) {
+        return { keep: false, reason: 'first_white_move' };
+      }
     }
 
     if (opts.timeControls) {
