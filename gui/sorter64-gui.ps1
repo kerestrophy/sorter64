@@ -19,11 +19,13 @@ function Show-Info([string]$message) {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = 'sorter64 Launcher - select an input PGN or folder'
-$form.Size = New-Object System.Drawing.Size(640, 390)
+$form.Size = New-Object System.Drawing.Size(640, 430)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
 $form.MinimizeBox = $true
+
+$toolTip = New-Object System.Windows.Forms.ToolTip
 
 $lblInput = New-Object System.Windows.Forms.Label
 $lblInput.Text = 'Input PGN / Folder'
@@ -87,19 +89,32 @@ $txtFirstWhiteMove = New-Object System.Windows.Forms.TextBox
 $txtFirstWhiteMove.Location = New-Object System.Drawing.Point(200, 172)
 $txtFirstWhiteMove.Size = New-Object System.Drawing.Size(420, 20)
 
+$lblMaxPly = New-Object System.Windows.Forms.Label
+$lblMaxPly.Text = 'Max Ply (optional)'
+$lblMaxPly.Location = New-Object System.Drawing.Point(12, 206)
+$lblMaxPly.Size = New-Object System.Drawing.Size(180, 20)
+
+$txtMaxPly = New-Object System.Windows.Forms.TextBox
+$txtMaxPly.Location = New-Object System.Drawing.Point(200, 204)
+$txtMaxPly.Size = New-Object System.Drawing.Size(120, 20)
+
+$maxPlyHint = 'Aufgaben mit längerer Lösung werden aussortiert, nicht gekürzt.'
+$toolTip.SetToolTip($lblMaxPly, $maxPlyHint)
+$toolTip.SetToolTip($txtMaxPly, $maxPlyHint)
+
 $chkDrawOnly = New-Object System.Windows.Forms.CheckBox
 $chkDrawOnly.Text = 'Draw only'
-$chkDrawOnly.Location = New-Object System.Drawing.Point(140, 206)
+$chkDrawOnly.Location = New-Object System.Drawing.Point(140, 236)
 $chkDrawOnly.Size = New-Object System.Drawing.Size(120, 20)
 
 $btnStart = New-Object System.Windows.Forms.Button
 $btnStart.Text = 'Start'
-$btnStart.Location = New-Object System.Drawing.Point(430, 254)
+$btnStart.Location = New-Object System.Drawing.Point(430, 284)
 $btnStart.Size = New-Object System.Drawing.Size(90, 28)
 
 $btnCancel = New-Object System.Windows.Forms.Button
 $btnCancel.Text = 'Cancel'
-$btnCancel.Location = New-Object System.Drawing.Point(530, 254)
+$btnCancel.Location = New-Object System.Drawing.Point(530, 284)
 $btnCancel.Size = New-Object System.Drawing.Size(90, 28)
 $btnCancel.DialogResult = [System.Windows.Forms.DialogResult]::Cancel
 
@@ -159,6 +174,7 @@ $btnStart.Add_Click({
   $outputPath = $txtOutput.Text.Trim()
   $chunkText = $txtChunk.Text.Trim()
   $firstWhiteMove = $txtFirstWhiteMove.Text.Trim()
+  $maxPlyText = $txtMaxPly.Text.Trim()
   $extra = $txtExtra.Text.Trim()
 
   if (-not $inputPath) {
@@ -182,6 +198,9 @@ $btnStart.Add_Click({
     return
   }
 
+  [int]$maxPlyValue = 0
+  $hasMaxPly = [int]::TryParse($maxPlyText, [ref]$maxPlyValue) -and $maxPlyValue -gt 0
+
   if (-not (Test-Path -Path $runBat -PathType Leaf)) {
     Show-Error "run.bat not found at $runBat"
     return
@@ -193,7 +212,8 @@ $btnStart.Add_Click({
 
   $extraSummary = if ($extra) { $extra } else { '(none)' }
   $firstWhiteMoveSummary = if ($firstWhiteMove) { $firstWhiteMove } else { '(none)' }
-  $summary = "Input: $inputPath`nOutput: $outputPath`nGames per chunk: $chunkValue`nFirst white move: $firstWhiteMoveSummary`nExtra: $extraSummary"
+  $maxPlySummary = if ($hasMaxPly) { $maxPlyValue } else { '(off)' }
+  $summary = "Input: $inputPath`nOutput: $outputPath`nGames per chunk: $chunkValue`nFirst white move: $firstWhiteMoveSummary`nMax Ply: $maxPlySummary`nExtra: $extraSummary"
   $confirm = [System.Windows.Forms.MessageBox]::Show($summary, 'Start sorter64?', [System.Windows.Forms.MessageBoxButtons]::OKCancel, [System.Windows.Forms.MessageBoxIcon]::Question)
   if ($confirm -ne [System.Windows.Forms.DialogResult]::OK) {
     return
@@ -207,6 +227,9 @@ $btnStart.Add_Click({
     $argString = "$inputArg $outputArg $chunkArg"
     if ($firstWhiteMove) {
       $argString = "$argString --first-white-move `"$firstWhiteMove`""
+    }
+    if ($hasMaxPly) {
+      $argString = "$argString --max-ply $maxPlyValue"
     }
     if ($chkDrawOnly.Checked) {
       $argString = "$argString --draw-only"
@@ -237,6 +260,7 @@ $form.Controls.AddRange(@(
   $lblChunk, $txtChunk,
   $lblExtra, $txtExtra,
   $lblFirstWhiteMove, $txtFirstWhiteMove,
+  $lblMaxPly, $txtMaxPly,
   $chkDrawOnly,
   $btnStart, $btnCancel
 ))

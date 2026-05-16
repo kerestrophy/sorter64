@@ -5,6 +5,7 @@ const { GameBuilder } = require('./parser');
 const { classifyTimeControl } = require('./timecontrol');
 const { parseEloBins, pickEloBin, parseEloFromHeaders } = require('./bins');
 const { computeDedupeHash } = require('./dedupe');
+const { parseOptionalMaxPly, detectSolutionPly } = require('./max-ply');
 const {
   estimatePlies,
   normalizeDate,
@@ -58,6 +59,7 @@ function parseArgs(argv) {
       case '--rated':
       case '--min-moves':
       case '--max-moves':
+      case '--max-ply':
       case '--since':
       case '--until':
       case '--zero-pad':
@@ -80,7 +82,7 @@ function parseArgs(argv) {
 }
 
 function printHelp() {
-  console.log(`sorter64 - PGN Chunker + Sorter + Filter\n\nUsage:\n  node .\\bin\\sorter64.js --input <file-or-folder> [options]\n\nOptions:\n  --input <path>            Required PGN file or directory\n  --input-recursive         Include subfolders when input is a directory\n  --out <dir>               Output directory (default: out)\n  --games-per-chunk <n>     Games per chunk (default: 5000)\n  --prefix <name>           Filename prefix (default: input basename)\n  --progress-every <n>      Progress log interval (default: 1000)\n  --elo-bins <list>         e.g. "800-1200,1200-1600,1600-2000,2000-9999"\n  --time-controls <list>    bullet,blitz,rapid,classical,unknown\n  --rated <mode>            only|exclude|any (default: any)\n  --min-moves <n>           Minimum plies\n  --max-moves <n>           Maximum plies\n  --since <YYYY-MM-DD>      Inclusive date filter\n  --until <YYYY-MM-DD>      Inclusive date filter\n  --first-white-move <san>  Keep games where first white move starts with value\n  --first-white-moves <csv> Keep games where first white move starts with any csv value\n  --dedupe                  Skip duplicate games\n  --dry-run                 Count/report only, no chunk output\n  --zero-pad <n>            Chunk index padding (default: 4)\n  --draw-only               Keep only drawn games (Result 1/2-1/2)\n  --help                    Show help\n\nExamples:\n  node .\\bin\\sorter64.js --input lichess.pgn --games-per-chunk 5000\n  node .\\bin\\sorter64.js --input lichess.pgn --elo-bins "800-1200,1200-1600" --time-controls blitz,rapid\n  node .\\bin\\sorter64.js --input lichess.pgn --dedupe --rated only --since 2021-01-01 --until 2021-12-31\n  node .\\bin\\sorter64.js --input .\\pgns --input-recursive --games-per-chunk 200\n  node .\\bin\\sorter64.js --input lichess.pgn --first-white-move d4\n`);
+  console.log(`sorter64 - PGN Chunker + Sorter + Filter\n\nUsage:\n  node .\\bin\\sorter64.js --input <file-or-folder> [options]\n\nOptions:\n  --input <path>            Required PGN file or directory\n  --input-recursive         Include subfolders when input is a directory\n  --out <dir>               Output directory (default: out)\n  --games-per-chunk <n>     Games per chunk (default: 5000)\n  --prefix <name>           Filename prefix (default: input basename)\n  --progress-every <n>      Progress log interval (default: 1000)\n  --elo-bins <list>         e.g. "800-1200,1200-1600,1600-2000,2000-9999"\n  --time-controls <list>    bullet,blitz,rapid,classical,unknown\n  --rated <mode>            only|exclude|any (default: any)\n  --min-moves <n>           Minimum plies\n  --max-moves <n>           Maximum plies\n  --max-ply <n>             Reject tasks/games with solution length > n (optional)\n  --since <YYYY-MM-DD>      Inclusive date filter\n  --until <YYYY-MM-DD>      Inclusive date filter\n  --first-white-move <san>  Keep games where first white move starts with value\n  --first-white-moves <csv> Keep games where first white move starts with any csv value\n  --dedupe                  Skip duplicate games\n  --dry-run                 Count/report only, no chunk output\n  --zero-pad <n>            Chunk index padding (default: 4)\n  --draw-only               Keep only drawn games (Result 1/2-1/2)\n  --help                    Show help\n\nExamples:\n  node .\\bin\\sorter64.js --input lichess.pgn --games-per-chunk 5000\n  node .\\bin\\sorter64.js --input lichess.pgn --elo-bins "800-1200,1200-1600" --time-controls blitz,rapid\n  node .\\bin\\sorter64.js --input lichess.pgn --dedupe --rated only --since 2021-01-01 --until 2021-12-31\n  node .\\bin\\sorter64.js --input .\\pgns --input-recursive --games-per-chunk 200\n  node .\\bin\\sorter64.js --input lichess.pgn --first-white-move d4\n`);
 }
 
 function coerceInt(value, name) {
@@ -103,6 +105,7 @@ function buildOptions(parsed) {
     rated: parsed.rated || DEFAULTS.rated,
     minMoves: parsed['min-moves'] ? coerceInt(parsed['min-moves'], 'min-moves') : null,
     maxMoves: parsed['max-moves'] ? coerceInt(parsed['max-moves'], 'max-moves') : null,
+    maxPly: parseOptionalMaxPly(parsed['max-ply']),
     since: parsed.since || null,
     until: parsed.until || null,
     firstWhiteMove: parsed['first-white-move'] || null,
@@ -233,6 +236,11 @@ async function runCli(argv) {
       skipped: 0,
       skippedByReason: {},
       filteredByReason: {},
+      maxPly: {
+        value: opts.maxPly,
+        rejected: 0,
+        unknown: 0
+      },
       bins: {},
       chunks: {}
     }
@@ -303,6 +311,16 @@ async function runCli(argv) {
       return { keep: false, reason: 'max_moves' };
     }
 
+    if (opts.maxPly) {
+      const solutionInfo = detectSolutionPly(game);
+      if (solutionInfo.known && solutionInfo.plies > opts.maxPly) {
+        return { keep: false, reason: 'max_ply' };
+      }
+      if (!solutionInfo.known) {
+        return { keep: true, maxPlyUnknown: true };
+      }
+    }
+
     if (opts.since || opts.until) {
       const gameDate = parseGameDate(headers);
       if (!gameDate) {
@@ -326,9 +344,15 @@ async function runCli(argv) {
     try {
       const filterResult = applyFilters(game);
       if (!filterResult.keep) {
+        if (filterResult.reason === 'max_ply') {
+          report.counters.maxPly.rejected += 1;
+        }
         recordSkip(filterResult.reason, game);
         recordFilter(filterResult.reason);
         return;
+      }
+      if (filterResult.maxPlyUnknown) {
+        report.counters.maxPly.unknown += 1;
       }
 
     let binLabel = 'chunks';
@@ -406,6 +430,7 @@ async function runCli(argv) {
   report.finishedAt = new Date().toISOString();
   writeReport(reportPath, report);
   console.log(`done read=${report.counters.read} written=${report.counters.written} skipped=${report.counters.skipped}`);
+  console.log(`maxPly total=${report.counters.read} kept=${report.counters.written} rejectedByMaxPly=${report.counters.maxPly.rejected} maxPly=${opts.maxPly || '(off)'}`);
   const chunksWritten = Object.keys(report.counters.chunks || {}).length;
   const filesCount = inputIsDir ? inputFiles.length : 1;
   console.log(`summary inputMode=${inputIsDir ? 'folder' : 'file'} files=${filesCount} gamesRead=${report.counters.read} gamesWritten=${report.counters.written} chunksWritten=${chunksWritten} skippedGames=${report.counters.skipped}`);
